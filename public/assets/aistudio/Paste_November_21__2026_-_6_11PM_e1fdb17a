@@ -1,0 +1,1982 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDDMOBI POS - Point of Sale System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h2 { font-size: 24px; margin-bottom: 5px; }
+    .header p { font-size: 14px; opacity: 0.9; }
+
+    /* LOGIN & REGISTER */
+    #login, #register {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    #login h3, #register h3 { margin-bottom: 20px; color: #333; text-align: center; }
+    .login-group { margin-bottom: 15px; }
+    .login-group input {
+      width: 100%; padding: 10px; border: 1px solid #ddd;
+      border-radius: 5px; font-size: 14px;
+    }
+    .password-wrap { position: relative; width: 100%; }
+    .password-wrap input { padding-right: 76px; }
+    .password-toggle {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      border: 0; background: transparent; color: #5365c5; cursor: pointer;
+      font-size: 12px; font-weight: 700; padding: 6px;
+    }
+    .password-toggle:focus { outline: 2px solid #667eea; border-radius: 4px; }
+    .login-group input:focus {
+      outline: none; border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+    }
+    .login-btn {
+      width: 100%; padding: 10px; background: #667eea;
+      color: white; border: none; border-radius: 5px;
+      font-size: 16px; font-weight: bold; cursor: pointer;
+      transition: background 0.3s;
+    }
+    .login-btn:hover { background: #764ba2; }
+    .toggle-auth { text-align: center; margin-top: 15px; }
+    .toggle-auth a { color: #667eea; cursor: pointer; text-decoration: underline; }
+
+    /* DEBUG PANEL */
+    #debugPanel {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #debugPanel .log-info { color: #4fc1ff; }
+    #debugPanel .log-success { color: #4ec9b0; }
+    #debugPanel .log-error { color: #f48771; }
+    #debugPanel .log-warn { color: #dcdcaa; }
+
+    /* APP */
+    #app { display: none; padding: 20px; }
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+    }
+    .user-info { font-size: 14px; color: #667eea; font-weight: bold; }
+    .role-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; margin-left: 8px; color: white;
+    }
+    .role-admin { background: #28a745; }
+    .role-sales { background: #17a2b8; }
+    .logout-btn {
+      padding: 8px 15px; background: #dc3545; color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .section:last-child { border-bottom: none; }
+    .section h3 {
+      color: #333; margin-bottom: 15px; font-size: 18px;
+      border-bottom: 2px solid #667eea; padding-bottom: 10px;
+    }
+    .form-group {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 15px;
+    }
+    .sale-form, .purchase-form {
+      grid-template-columns: minmax(220px, 1.4fr) repeat(auto-fit, minmax(130px, 1fr));
+      align-items: start;
+    }
+    .product-picker {
+      grid-row: span 2;
+    }
+    .product-picker input {
+      width: 100%;
+      margin-bottom: 6px;
+    }
+    .product-picker select {
+      width: 100%;
+      height: 42px;
+      padding: 6px;
+    }
+    .sale-form input, .sale-form select, .sale-form button,
+    .purchase-form input, .purchase-form select, .purchase-form button {
+      min-height: 38px;
+      padding: 8px;
+    }
+    input, select, button {
+      padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
+    }
+    button { background: #667eea; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #764ba2; }
+    button.success { background: #28a745; }
+    button.danger { background: #dc3545; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #667eea; color: white; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .action-btn { padding: 5px 10px; margin: 2px; font-size: 12px; cursor: pointer; }
+    .edit-btn { background: #ffc107; color: black; }
+    .delete-btn { background: #dc3545; color: white; }
+    #output, #receipt {
+      background: #f5f5f5; border: 1px solid #ddd; padding: 15px;
+      border-radius: 5px; margin-top: 15px; font-family: 'Courier New', monospace;
+      white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;
+    }
+    .alert {
+      padding: 12px; margin-bottom: 15px; border-radius: 5px; font-size: 14px;
+    }
+    .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 20px; border-radius: 5px; text-align: center;
+    }
+    .stat-card h4 { font-size: 12px; opacity: 0.9; margin-bottom: 10px; }
+    .stat-card .value { font-size: 24px; font-weight: bold; }
+    .tab-btn.hidden { display: none; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tabs {
+      display: flex; gap: 10px; margin-bottom: 20px;
+      border-bottom: 2px solid #eee; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 20px; background: none; border: none; color: #666;
+      cursor: pointer; font-size: 14px; font-weight: bold;
+      border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; }
+    .modal-buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+    .user-card {
+      background: #f8f9fa; border: 1px solid #dee2e6;
+      border-radius: 8px; padding: 15px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .user-card .user-name { font-weight: bold; color: #333; }
+    .user-card .user-role {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; color: white; margin-left: 8px;
+    }
+    .admin-only-section { display: none; }
+    @media (max-width: 768px) {
+      .form-group { grid-template-columns: 1fr; }
+      .sale-form, .purchase-form { grid-template-columns: 1fr; }
+      .product-picker { grid-row: auto; }
+      .stats { grid-template-columns: 1fr; }
+    }
+    #debugPanel {
+  display: none;
+}
+
+    /* EDDMOBI modern responsive refresh */
+    body{background:radial-gradient(circle at 10% 0%,#e8efff 0,transparent 32%),linear-gradient(135deg,#eef2f9,#f8faff);padding:clamp(8px,2vw,24px);color:#172033}
+    .container{max-width:1380px;border-radius:20px;box-shadow:0 24px 70px rgba(16,34,67,.16);border:1px solid rgba(255,255,255,.8)}
+    .header{background:linear-gradient(120deg,#0c1c38,#1457c5 70%,#e5323a);padding:28px 20px}
+    #app{padding:clamp(12px,2.2vw,28px)}
+    .top-bar{background:#fff;border:1px solid #e7ebf3;border-radius:14px;padding:14px 18px;box-shadow:0 5px 18px rgba(20,40,80,.05)}
+    .user-info{color:#163f88}.tabs{gap:6px;border:0;background:#edf2fb;padding:7px;border-radius:13px}
+    .tab-btn{border-radius:9px;padding:11px 15px;color:#53627b;border:0}
+    .tab-btn.active{background:#1457c5;color:white;box-shadow:0 6px 15px #1457c52b}
+    .section{background:#fff;padding:22px;border:1px solid #e8edf5;border-radius:16px;margin-bottom:20px;box-shadow:0 7px 25px rgba(16,34,67,.045)}
+    .section h3{color:#15233b;border-bottom-color:#e5323a;padding-bottom:12px}
+    input,select{border:1px solid #dce3ee;border-radius:9px;background:#fff;min-height:42px}
+    input:focus,select:focus{outline:3px solid #1457c51c;border-color:#1457c5}
+    button{background:#1457c5;border-radius:9px;transition:transform .15s,filter .15s}
+    button:hover{filter:brightness(1.05);transform:translateY(-1px)}
+    button.success{background:#168653}.logout-btn,button.danger{background:#e5323a}
+    .stat-card{background:linear-gradient(135deg,#10203a,#1457c5);border-radius:15px;box-shadow:0 10px 24px #1457c51c}
+    .stat-card:nth-child(2){background:linear-gradient(135deg,#112b45,#167c90)}.stat-card:nth-child(3){background:linear-gradient(135deg,#9e2028,#e5323a)}.stat-card:nth-child(4){background:linear-gradient(135deg,#1e583c,#21a36b)}
+    table{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px;font-size:13px}
+    th{background:#142744;color:#fff}th,td{padding:11px 12px;border:0;border-bottom:1px solid #e8edf5}
+    tr:nth-child(even){background:#f7f9fd}tr:last-child td{border-bottom:0}
+    #output,#receipt{background:#f8faff;border:1px solid #dfe7f3;border-left:4px solid #1457c5;border-radius:12px;font-family:ui-monospace,Consolas,monospace;max-height:none}
+    .reset-btn,.secondary-btn{background:#edf2fb!important;color:#1c3765!important;border:1px solid #d6e1f2!important}
+    .section-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .section-title-row>div{display:flex;gap:8px;flex-wrap:wrap}
+    .stock-alerts{display:grid;gap:10px}.stock-alert{display:flex;align-items:center;gap:12px;border-radius:12px;padding:13px 15px;border:1px solid}
+    .stock-alert.low{background:#fff8e8;border-color:#f5d58c;color:#7c4a03}.stock-alert.out{background:#fff0f0;border-color:#f1b6b6;color:#a51f27}
+    .stock-alert-icon{font-size:22px}.stock-alert small{display:block;margin-top:3px}.stock-count{margin-left:auto;font-size:20px;font-weight:900}
+    .stock-ok{background:#edfbf3;border:1px solid #bce8cc;color:#166534;padding:15px;border-radius:10px}
+    .muted{color:#718096;padding:12px}.receipt-upload{display:grid;gap:5px;padding:10px;border:1px dashed #cbd5e1;border-radius:10px;font-size:12px}.receipt-upload label{font-weight:700;color:#34445f}
+    @media(max-width:700px){.section{padding:14px}.tab-btn{padding:9px 11px;font-size:12px}.stat-card{padding:15px}.stat-card .value{font-size:20px}table{display:block;overflow-x:auto;white-space:nowrap}.section-title-row{align-items:flex-start}}
+    .profit-chart-wrap{background:#fff;border:1px solid #e5eaf2;border-radius:16px;padding:18px;margin:16px 0;box-shadow:0 5px 18px rgba(15,35,70,.06)}
+    .profit-chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .profit-chart-head h3{margin:0;color:#172b4d}
+    .profit-chart-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .profit-chart-controls select{padding:10px 12px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}
+    #profitTrendCanvas{display:block;width:100%;height:310px}
+    .profit-chart-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .profit-chart-summary span{background:#f1f6ff;border-radius:9px;padding:9px 12px;color:#24436e;font-size:14px}
+    @media(max-width:600px){.profit-chart-wrap{padding:12px}#profitTrendCanvas{height:260px}}
+    .payment-action{padding:8px 10px;margin:2px;font-size:12px}
+    .payment-action.reject{background:#b42318}
+  </style>
+<base target="_blank">
+</head> 
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>� EDDMOBI POS</h2>
+    <p>Point of Sale System |  0722540912</p>
+  </div>
+
+  <!-- DEBUG PANEL -->
+  <div id="debugPanel">
+    <div style="color:#fff; font-weight:bold; margin-bottom:10px;"> DEBUG LOG</div>
+    <div id="debugLogs"></div>
+  </div>
+  <div id="authAlertBox"></div>
+
+  <!-- LOGIN -->
+  <div id="login">
+    <h3>Staff Login</h3>
+    <div class="login-group">
+      <input id="loginEmail" type="email" placeholder="Email address" autocomplete="email">
+    </div>
+    <div class="login-group">
+      <div class="password-wrap">
+        <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button class="password-toggle" type="button" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show password">Show</button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="login()">Login</button>
+    <div class="toggle-auth" style="margin-top:10px;">
+      <button type="button" class="password-reset-link" onclick="forgotPassword()" style="background:none;border:0;color:#1769aa;text-decoration:underline;cursor:pointer;font:inherit;padding:6px 10px;">Forgot password? Send reset email</button>
+      <p style="font-size:12px;color:#667085;margin:4px 0 0;">Enter your account email above first. We will send you a secure reset link.</p>
+    </div>
+    <div class="toggle-auth">
+      <p>Don't have an account? <a onclick="showRegister()">Register Business</a></p>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="Register" style="display:none;">
+    <h3>Register Your Business</h3>
+    <p style="margin-bottom:14px;color:#667085">Create your business account and start using EDDMOBI POS.</p>
+    <div class="login-group">
+      <input id="bizName" placeholder="Business Name">
+    </div>
+    <div class="login-group">
+      <input id="bizEmail" type="email" placeholder="Admin Email">
+    </div>
+    <div class="login-group">
+      <div class="password-wrap">
+        <input id="bizPassword" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password">
+        <button class="password-toggle" type="button" onclick="togglePasswordVisibility('bizPassword', this)" aria-label="Show password">Show</button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="registerBusiness()">Create Account</button>
+    <div class="toggle-auth">
+      <p>Already have an account? <a onclick="showLogin()">Login</a></p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none;">
+    <div id="appMainContent">
+    <div class="top-bar">
+      <div class="user-info">
+     <span id="currentUserName">User</span>
+        <span id="currentUserRole" class="role-badge">Role</span>
+        <span id="orgName" style="margin-left:10px; color:#666; font-weight:normal;"></span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    <div id="alertBox"></div>
+
+    <div class="tabs" id="mainTabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('products', this)">Products</button>
+      <button class="tab-btn" onclick="switchTab('sales', this)">Sales</button>
+      <button class="tab-btn" onclick="switchTab('dailySales', this)">Daily Sales</button>
+      <button class="tab-btn" onclick="switchTab('purchases', this)">Purchases</button>
+      <button class="tab-btn" onclick="switchTab('expenses', this)">Expenses</button>
+      <button class="tab-btn" onclick="switchTab('reports', this)">Reports</button>
+      <button class="tab-btn admin-only" onclick="switchTab('users', this)">👥 Users</button>
+    </div>
+
+    <div id="dashboard" class="tab-content active">
+      <div class="section">
+        <h3>Dashboard</h3>
+        <div class="stats">
+          <div class="stat-card"><h4>Total Products</h4><div class="value" id="totalProducts">0</div></div>
+          <div class="stat-card"><h4>Total Stock Value</h4><div class="value" id="totalStockValue">KES 0</div></div>
+          <div class="stat-card"><h4>Today's Sales</h4><div class="value" id="todaySales">KES 0</div></div>
+          <div class="stat-card"><h4>Today's Profit</h4><div class="value" id="todayProfit">KES 0</div></div>
+        </div>
+        <div class="section stock-alert-section">
+          <div class="section-title-row"><h3>Stock Alerts</h3><button type="button" class="secondary-btn" onclick="enableStockNotifications()">Enable browser notifications</button></div>
+          <div id="stockAlerts" class="stock-alerts"><p class="muted">Stock alerts will appear here.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="products" class="tab-content">
+      <div class="section admin-only-section">
+        <h3> Add New Product</h3>
+        <div class="form-group">
+          <input id="pname" placeholder="Product name">
+          <input id="buy" type="number" placeholder="Buying price" min="0" step="0.01">
+          <input id="sell" type="number" placeholder="Selling price" min="0" step="0.01">
+          <input id="stock" type="number" placeholder="Initial stock" min="0">
+          <input id="lowStockThreshold" type="number" placeholder="Low-stock alert level" min="0" value="5">
+          <button type="button" onclick="addProduct()">Add Product</button>
+          <button type="button" class="reset-btn" onclick="resetProductForm()">Reset Form</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Product Stock</h3>
+        <div class="form-group" style="margin:12px 0 16px">
+          <input type="search" id="stockProductSearch" placeholder="Search products by name..." oninput="filterStockTable()" aria-label="Search products by name">
+        </div>
+        <table id="stockTable"></table>
+      </div>
+    </div>
+
+    <div id="sales" class="tab-content">
+      <div class="section">
+        <h3>Make a Sale</h3>
+        <div class="form-group sale-form">
+          <div class="product-picker">
+            <input type="text" id="productSearch" placeholder="Search product..." onkeyup="filterProducts()">
+            <select id="productSelect"></select>
+          </div>
+          <input id="qty" type="number" placeholder="Quantity" min="1">
+          <input id="customPrice" type="number" placeholder="Custom price (optional)" min="0" step="0.01">
+          <input id="discount" type="number" placeholder="Discount" min="0" step="0.01" value="0">
+          <input id="customer" placeholder="Customer name (optional)">
+          <select id="payment"><option>Cash</option><option>M-Pesa</option><option>Cheque</option><option>Credit</option></select>
+          <button class="success" type="button" onclick="sell()">Complete Sale</button>
+          <button class="reset-btn" type="button" onclick="resetSaleForm()">Reset Form</button>
+        </div>
+      </div>
+	  <div class="section">
+    <h3>Today's Sold Items</h3>
+    <table id="todaySoldItemsTable"></table>
+</div>
+	  <div class="section">
+    <h3>Today's Product Summary</h3>
+    <table id="todaySalesSummaryTable"></table>
+</div>
+	  
+      <div class="section">
+        <h3>Recent Sales</h3>
+        <table id="recentSalesTable"></table>
+      </div>
+      <div class="section">
+        <div class="section-title-row"><h3>Receipt / Invoice</h3><div><button type="button" onclick="printLastInvoice()">Print / Save Invoice</button><button type="button" class="reset-btn" onclick="clearReceipt()">Clear Receipt</button></div></div>
+        <div id="receipt">Complete a sale to generate a receipt and invoice here.</div>
+      </div>
+    </div>
+
+    <div id="dailySales" class="tab-content">
+      <div class="section">
+        <h3>Daily Sales</h3>
+        <div class="form-group" style="grid-template-columns: auto minmax(180px, 240px); align-items: center;">
+          <label for="dailySalesDate">Select date</label>
+          <input id="dailySalesDate" type="date" onchange="loadDailySales()">
+        </div>
+        <div class="stats">
+          <div class="stat-card"><h4>Items Sold</h4><div class="value" id="dailySalesCount">0</div></div>
+          <div class="stat-card"><h4>Sales Total</h4><div class="value" id="dailySalesTotal">KES 0</div></div>
+          <div class="stat-card"><h4>Profit</h4><div class="value" id="dailySalesProfit">KES 0</div></div>
+        </div>
+        <table id="dailySalesTable"></table>
+      </div>
+    </div>
+    <div id="purchases" class="tab-content">
+      <div class="section">
+        <h3>Add Purchase</h3>
+        <div class="form-group purchase-form">
+          <div class="product-picker">
+            <input type="text" id="purchaseProductSearch" placeholder="Search product..." onkeyup="filterPurchaseProducts()">
+            <select id="purchaseProductSelect" size="5" onchange="fillPurchasePrice()"></select>
+          </div>
+          <input id="purchaseQty" type="number" placeholder="Quantity bought" min="1">
+          <input id="purchasePrice" type="number" placeholder="Buying price per item" min="0" step="0.01">
+          <input id="purchaseSupplier" placeholder="Supplier (optional)">
+          <input id="purchaseNote" placeholder="Note (optional)">
+          <div class="receipt-upload"><label for="purchaseReceipt">Supplier receipt (image/PDF, max 700 KB)</label><input id="purchaseReceipt" type="file" accept="image/*,.pdf"></div>
+          <button class="success" type="button" onclick="addPurchase()">Add Purchase & Update Stock</button>
+          <button class="reset-btn" type="button" onclick="resetPurchaseForm()">Reset Form</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Recent Purchases</h3>
+        <table id="purchasesTable"></table>
+      </div>
+    </div>
+
+    <div id="expenses" class="tab-content">
+      <div class="section admin-only-section">
+        <h3>Record Expense</h3>
+        <div class="form-group">
+          <input id="expenseName" placeholder="Expense description">
+          <input id="expenseAmount" type="number" placeholder="Amount" min="0" step="0.01">
+          <button onclick="addExpense()">Add Expense</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3> Expense Log</h3>
+        <table id="expensesTable"></table>
+      </div>
+    </div>
+
+    <div id="reports" class="tab-content">
+      <div class="section">
+        <h3> Generate Report</h3>
+        <div class="form-group">
+          <button class="success" onclick="generateDailyReport()">Daily Report</button>
+          <button class="success" onclick="generateMonthlyReport()">Monthly Report</button>
+          <button class="success admin-only-btn" onclick="generateAnnualReport()">Annual Report</button>
+          <button class="admin-only-btn" onclick="exportToCSV()">Export to CSV</button>
+        </div>
+      </div>
+      <div class="profit-chart-wrap">
+        <div class="profit-chart-head">
+          <h3>Profit Trends</h3>
+          <div class="profit-chart-controls">
+            <label for="profitTrendPeriod">View trend:</label>
+            <select id="profitTrendPeriod" onchange="loadProfitTrend()">
+              <option value="weekly">Weekly (this week)</option>
+              <option value="monthly" selected>Monthly (this month)</option>
+              <option value="yearly">Yearly (this year)</option>
+            </select>
+            <button class="success" onclick="loadProfitTrend()">Refresh Graph</button>
+          </div>
+        </div>
+        <canvas id="profitTrendCanvas" aria-label="Profit trend chart" role="img"></canvas>
+        <div class="profit-chart-summary" id="profitTrendSummary"><span>Loading profit trend…</span></div>
+        <small style="display:block;color:#64748b;margin-top:10px">Net profit = recorded sales profit minus recorded expenses. The graph uses your saved Eddmobi records.</small>
+      </div>
+      <div class="section"><pre id="output"></pre></div>
+    </div>
+
+    <div id="users" class="tab-content">
+      <div class="section">
+        <h3> Add New Staff Member</h3>
+        <div class="alert alert-warning">
+          <strong>Note:</strong> Creating staff will log you out. Login again after.
+        </div>
+        <div class="form-group">
+          <input id="newUsername" placeholder="Display name">
+          <input id="newEmail" type="email" placeholder="Staff Email">
+          <div class="password-wrap">
+            <input id="newPassword" type="password" placeholder="Temporary Password" autocomplete="new-password">
+            <button class="password-toggle" type="button" onclick="togglePasswordVisibility('newPassword', this)" aria-label="Show password">Show</button>
+          </div>
+          <select id="newRole"><option value="sales">Sales Staff</option><option value="admin">Admin</option></select>
+          <button class="success" onclick="addUser()">Create Staff Account</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>👥 Staff Members</h3>
+        <div id="usersList"></div>
+      </div>
+    </div>
+    </div><!-- end appMainContent -->
+  </div>
+</div>
+
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <h4>Confirm Action</h4>
+    <p id="confirmMessage"></p>
+    <div class="modal-buttons">
+      <button onclick="cancelConfirm()">Cancel</button>
+      <button class="danger" onclick="executeConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h4>Edit Product</h4>
+    <div class="form-group" style="display: block;">
+      <input id="editPname" placeholder="Product name" style="margin-bottom:10px; width:100%;">
+      <input id="editBuy" type="number" placeholder="Buying price" style="margin-bottom:10px; width:100%;">
+      <input id="editSell" type="number" placeholder="Selling price" style="margin-bottom:10px; width:100%;">
+      <input id="editStock" type="number" placeholder="Stock" style="margin-bottom:10px; width:100%;">
+    </div>
+    <div class="modal-buttons">
+      <button onclick="closeEditModal()">Cancel</button>
+      <button class="success" onclick="saveProductEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<script>
+// ============= DEBUG LOGGER =============
+function debugLog(message, type = 'info') {
+  const consoleDiv = document.getElementById('debugLogs');
+  const timestamp = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = `log-${type}`;
+  entry.textContent = `[${timestamp}] ${message}`;
+  consoleDiv.appendChild(entry);
+  consoleDiv.scrollTop = consoleDiv.scrollHeight;
+  if (type === 'error') console.error(message);
+  else if (type === 'warn') console.warn(message);
+  else console.log(message);
+}
+
+// ============= FIREBASE CONFIG =============
+const firebaseConfig = {
+    apiKey: "AIzaSyDVWr39GUNMF6d5ytjc7gH9XshS2LbP3vc",
+    authDomain: "edd2-58582.firebaseapp.com",
+    projectId: "edd2-58582",
+    storageBucket: "edd2-58582.firebasestorage.app",
+    messagingSenderId: "9804174722",
+    appId: "1:9804174722:web:528d298ce333316cbeab9b",
+    measurementId: "G-BQCF64RTVY"
+  };
+
+
+debugLog('Initializing Firebase...');
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  debugLog('Firebase initialized OK', 'success');
+} catch (e) {
+  debugLog('Firebase init ERROR: ' + e.message, 'error');
+}
+
+const firestoredb = firebase.firestore();
+const auth = firebase.auth();
+
+// ============= ROLES =============
+const ROLES = { ADMIN: 'admin', SALES: 'sales' };
+
+const PERMISSIONS = {
+  [ROLES.ADMIN]: {
+    canAddProducts: true, canEditProducts: true, canDeleteProducts: true,
+    canAddPurchases: true, canViewPurchases: true,
+    canAddExpenses: true, canDeleteExpenses: true, canDeleteSales: true,
+    canViewReports: true, canExportCSV: true, canViewAnnualReport: true,
+    canManageUsers: true, canViewBuyingPrice: true,
+    tabs: ['dashboard', 'products', 'sales', 'dailySales', 'purchases', 'expenses', 'reports', 'users']
+  },
+  [ROLES.SALES]: {
+    canAddProducts: false, canEditProducts: false, canDeleteProducts: false,
+    canAddPurchases: true, canViewPurchases: true,
+    canAddExpenses: false, canDeleteExpenses: false, canDeleteSales: false,
+    canViewReports: false, canExportCSV: false, canViewAnnualReport: false,
+    canManageUsers: false, canViewBuyingPrice: false,
+    tabs: [ 'products', 'sales', 'dailySales', 'purchases', 'reports']
+  }
+};
+
+// ============= STATE =============
+let currentUser = null;
+let currentOrg = null;
+let confirmAction = null;
+let editingProductId = null;
+let unsubscribeProducts = null;
+let unsubscribeSales = null;
+let unsubscribePurchases = null;
+let unsubscribeExpenses = null;
+let isInitializing = false;
+let registrationInProgress = false;
+
+// ============= UTILITIES =============
+function showAlert(message, type = 'success') {
+  const app = document.getElementById('app');
+  const appIsVisible = app && app.style.display !== 'none';
+  const alertBox = appIsVisible
+    ? document.getElementById('alertBox')
+    : document.getElementById('authAlertBox');
+  if (!alertBox) return;
+  alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  setTimeout(() => alertBox.innerHTML = '', 4000);
+} 
+
+function clearForm(inputIds) {
+  inputIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+}
+
+function formatCurrency(amount) {
+  if (amount === undefined || amount === null || isNaN(amount)) amount = 0;
+  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(amount);
+}
+
+function formatDate(date) {
+  if (typeof date === 'string') date = new Date(date);
+  if (!(date instanceof Date) || isNaN(date)) date = new Date();
+  return date.toLocaleDateString('en-KE') + ' ' + date.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ============= NAVIGATION =============
+function togglePasswordVisibility(inputId, button) {
+  const field = document.getElementById(inputId);
+  if (!field) return;
+  const showing = field.type === 'password';
+  field.type = showing ? 'text' : 'password';
+  button.textContent = showing ? 'Hide' : 'Show';
+  button.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+}
+
+function showLogin() {
+  document.getElementById('login').style.display = 'block';
+  document.getElementById('Register').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showRegister() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('Register').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('Register').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ============= REGISTRATION =============
+async function registerBusiness() {
+  if (registrationInProgress) return;
+  const name = document.getElementById('bizName').value.trim();
+  const email = document.getElementById('bizEmail').value.trim().toLowerCase();
+  const password = document.getElementById('bizPassword').value;
+  if (!name || !email || !password) { showAlert('Please fill all fields', 'danger'); return; }
+  if (password.length < 6) { showAlert('Password must be at least 6 characters', 'warning'); return; }
+  registrationInProgress = true;
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+    const orgRef = firestoredb.collection('organizations').doc();
+    await orgRef.set({
+      name, ownerId: uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    await firestoredb.collection('users').doc(uid).set({
+      user: email.split('@')[0], email, role: 'admin', orgId: orgRef.id,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const userDoc = await firestoredb.collection('users').doc(uid).get();
+    if (!userDoc.exists) throw new Error('Your account was created, but its user profile could not be loaded. Contact support before registering again.');
+    clearForm(['bizName','bizEmail','bizPassword']);
+    registrationInProgress = false;
+    await initializeUserSession(cred.user, userDoc);
+    showAlert('Business registered successfully. You can now use EDDMOBI POS.', 'success');
+  } catch (err) {
+    registrationInProgress = false;
+    debugLog('REGISTER ERROR: ' + (err.code || '') + ' ' + err.message, 'error');
+    let msg = err.message;
+    if (err.code === 'auth/email-already-in-use') msg = 'This email already has an account. Please log in instead.';
+    if (err.code === 'auth/weak-password') msg = 'Choose a stronger password with at least 6 characters.';
+    if (err.code === 'auth/invalid-email') msg = 'Enter a valid email address.';
+    if (err.code === 'permission-denied') msg = 'Firebase Firestore rules blocked business registration. Update the rules for organizations and users, then try again.';
+    showAlert(msg, 'danger');
+  }
+}
+
+// ============= LOGIN =============
+// CRITICAL FIX: login() ONLY does auth. NO UI logic here.
+// onAuthStateChanged is the SINGLE source of truth.
+function login() {
+  debugLog('=== LOGIN STARTED ===');
+
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+
+  debugLog('Email: ' + email);
+
+  if (!email || !password) {
+    showAlert('Please enter email and password', 'danger');
+    return;
+  }
+
+  debugLog('Calling signInWithEmailAndPassword...');
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      debugLog('signInWithEmailAndPassword returned OK', 'success');
+      // onAuthStateChanged will handle the rest - DO NOT add UI code here
+    })
+    .catch(err => {
+      debugLog('LOGIN ERROR: ' + err.code + ' | ' + err.message, 'error');
+      showAlert(err.message, 'danger');
+    });
+}
+
+async function forgotPassword() {
+  const emailInput = document.getElementById('loginEmail');
+  const email = emailInput.value.trim().toLowerCase();
+
+  if (!email) {
+    showAlert('Please enter the email address registered with EDDMOBI POS, then tap Forgot password again.', 'warning');
+    emailInput.focus();
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showAlert('Please enter a valid email address.', 'danger');
+    emailInput.focus();
+    return;
+  }
+
+  const resetButton = document.querySelector('.password-reset-link');
+  if (resetButton) {
+    resetButton.disabled = true;
+    resetButton.textContent = 'Sending reset email...';
+    resetButton.style.opacity = '0.6';
+  }
+
+  try {
+    debugLog('Requesting Firebase password reset for: ' + email);
+
+    // Firebase sends the secure password-reset link using the project's
+    // configured Email/Password provider and email action template.
+    await auth.sendPasswordResetEmail(email);
+
+    showAlert('If an account exists for ' + email + ', Firebase has sent a password-reset link. Check your inbox and spam folder, then follow the link to choose a new password.', 'success');
+    debugLog('Password reset request accepted by Firebase', 'success');
+  } catch (err) {
+    debugLog('PASSWORD RESET ERROR: ' + err.code + ' | ' + err.message, 'error');
+    let message = 'We could not send the reset email. Please try again.';
+    switch (err.code) {
+      case 'auth/invalid-email':
+        message = 'That email address is not valid. Check it and try again.';
+        break;
+      case 'auth/user-not-found':
+        message = 'No EDDMOBI POS account was found for that email address. Check the spelling or register a new business.';
+        break;
+      case 'auth/operation-not-allowed':
+        message = 'Password reset is not enabled yet. In Firebase Console, enable Email/Password under Authentication → Sign-in method.';
+        break;
+      case 'auth/unauthorized-domain':
+        message = 'This website domain is not authorized by Firebase. Add its domain in Firebase Console → Authentication → Settings → Authorized domains.';
+        break;
+      case 'auth/too-many-requests':
+        message = 'Too many reset attempts. Wait a few minutes before trying again.';
+        break;
+      case 'auth/network-request-failed':
+        message = 'Network error. Check your internet connection and try again.';
+        break;
+      case 'auth/invalid-continue-uri':
+      case 'auth/missing-continue-uri':
+        message = 'The Firebase password-reset email settings need attention. Check the email action URL settings in Firebase Console.';
+        break;
+    }
+    showAlert(message, 'danger');
+  } finally {
+    if (resetButton) {
+      resetButton.disabled = false;
+      resetButton.textContent = 'Forgot password? Send reset email';
+      resetButton.style.opacity = '1';
+    }
+  }
+}
+
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    cleanupListeners();
+    currentUser = null;
+    currentOrg = null;
+    auth.signOut().then(() => {
+      showLogin();
+      clearForm(['loginEmail', 'loginPassword']);
+      showAlert('Logged out successfully', 'success');
+    }).catch(err => showAlert(err.message, 'danger'));
+  }
+}
+
+// ============= AUTH STATE LISTENER =============
+async function initializeUserSession(user, knownUserDoc) {
+  if (isInitializing) return;
+  isInitializing = true;
+  try {
+    const userDoc = knownUserDoc || await firestoredb.collection('users').doc(user.uid).get();
+    if (!userDoc.exists) throw new Error('Your login exists, but the business profile is missing. Contact the business administrator.');
+    const userData = userDoc.data();
+    if (!userData.orgId) throw new Error('Your account is not linked to a business. Contact the administrator.');
+    const orgDoc = await firestoredb.collection('organizations').doc(userData.orgId).get();
+    if (!orgDoc.exists) throw new Error('Business record not found. Contact support.');
+    currentUser = { id: userDoc.id, ...userData };
+    currentOrg = { id: orgDoc.id, ...orgDoc.data() };
+    document.getElementById('orgName').textContent = '🏪 ' + (currentOrg.name || 'Business');
+    showApp();
+    applyRoleBasedUI();
+    setupRealtimeListeners();
+    updateDashboard();
+  } catch (err) {
+    debugLog('AUTH INITIALIZATION ERROR: ' + err.message, 'error');
+    showAlert(err.message, 'danger');
+    if (err.code === 'permission-denied') showAlert('Firestore permission denied. Check your Firebase security rules.', 'danger');
+    if (!registrationInProgress) await auth.signOut().catch(()=>{});
+  } finally { isInitializing = false; }
+}
+
+auth.onAuthStateChanged(user => {
+  if (registrationInProgress) return;
+  if (user) {
+    initializeUserSession(user);
+  } else {
+    cleanupListeners(); currentUser = null; currentOrg = null;
+    showLogin();
+  }
+});
+
+// ============= LISTENERS =============
+function setupRealtimeListeners() {
+  cleanupListeners();
+  if (!currentUser || !currentUser.orgId) return;
+
+  const orgId = currentUser.orgId;
+  debugLog('Setting up realtime listeners for org: ' + orgId);
+
+  unsubscribeProducts = firestoredb.collection('products')
+    .where('orgId', '==', orgId)
+    .onSnapshot(snapshot => {
+      renderProducts(snapshot);
+    }, err => debugLog('Products listener error: ' + err.message, 'error'));
+
+  unsubscribeSales = firestoredb.collection('sales')
+    .where('orgId', '==', orgId)
+    .orderBy('date', 'desc')
+    .limit(50)
+    .onSnapshot(snapshot => {
+      renderRecentSales(snapshot);
+      loadTodaySales();
+      loadTodaySalesSummary();
+    }, err => debugLog('Sales listener error: ' + err.message, 'error'));
+
+  if (hasPermission('canViewPurchases')) {
+    unsubscribePurchases = firestoredb.collection('purchases')
+      .where('orgId', '==', orgId)
+      .orderBy('date', 'desc')
+      .limit(50)
+      .onSnapshot(snapshot => {
+        renderPurchases(snapshot);
+      }, err => {
+        debugLog('Purchases listener error: ' + err.message, 'warn');
+        const table = document.getElementById('purchasesTable');
+        if (table) {
+          table.innerHTML = '<tr><th>Date</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Supplier</th><th>Recorded By</th></tr><tr><td colspan="7" style="text-align:center;">Purchase log is blocked by Firebase permissions, but stock purchases can still be added.</td></tr>';
+        }
+      });
+  }
+
+  unsubscribeExpenses = firestoredb.collection('expenses')
+    .where('orgId', '==', orgId)
+    .orderBy('date', 'desc')
+    .onSnapshot(snapshot => {
+      renderExpenses(snapshot);
+    }, err => debugLog('Expenses listener error: ' + err.message, 'error'));
+}
+
+function cleanupListeners() {
+  if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
+  if (unsubscribeSales) { unsubscribeSales(); unsubscribeSales = null; }
+  if (unsubscribePurchases) { unsubscribePurchases(); unsubscribePurchases = null; }
+  if (unsubscribeExpenses) { unsubscribeExpenses(); unsubscribeExpenses = null; }
+}
+
+// ============= ROLE UI =============
+function applyRoleBasedUI() {
+  if (!currentUser) return;
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+
+  document.getElementById('currentUserName').textContent = currentUser.user;
+  const roleBadge = document.getElementById('currentUserRole');
+  roleBadge.textContent = currentUser.role.toUpperCase();
+  roleBadge.className = 'role-badge role-' + currentUser.role;
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tabName = btn.getAttribute('onclick');
+    if (tabName) {
+      const match = tabName.match(/switchTab\('([^']+)'/);
+      if (match) {
+        btn.classList.toggle('hidden', !perms.tabs.includes(match[1]));
+      }
+    }
+  });
+
+  document.querySelectorAll('.admin-only-section').forEach(el => {
+    el.style.display = perms.canAddProducts || perms.canAddExpenses ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.admin-only-btn').forEach(el => {
+    el.style.display = perms.canExportCSV || perms.canViewAnnualReport ? 'inline-block' : 'none';
+  });
+}
+
+function hasPermission(permission) {
+  if (!currentUser) return false;
+  return (PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES])[permission] === true;
+}
+
+function checkPermission(permission, actionName) {
+  if (!hasPermission(permission)) {
+    showAlert(`Access Denied: ${actionName} requires admin privileges.`, 'danger');
+    return false;
+  }
+  return true;
+}
+
+// ============= TABS =============
+function switchTab(tabName, btnElement) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  const tab = document.getElementById(tabName);
+  if (tab) tab.classList.add('active');
+  if (btnElement) btnElement.classList.add('active');
+  if (tabName === 'sales') {
+    loadTodaySales();
+    loadTodaySalesSummary();
+}
+
+  if (tabName === 'dailySales') loadDailySales();
+  if (tabName === 'dashboard') updateDashboard();
+  if (tabName === 'reports') loadProfitTrend();
+  if (tabName === 'purchases' && hasPermission('canViewPurchases')) {
+    filterPurchaseProducts();
+    if (document.getElementById('purchasesTable').innerHTML.trim() === '') {
+      document.getElementById('purchasesTable').innerHTML = '<tr><th>Date</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Supplier</th><th>Recorded By</th></tr><tr><td colspan="8" style="text-align:center;">No purchases yet</td></tr>';
+    }
+  }
+  if (tabName === 'users' && hasPermission('canManageUsers')) loadUsers();
+}
+
+function updateDashboard() {
+  if (!currentUser || !currentUser.orgId) return;
+  let totalProducts = 0, stockValue = 0, todaySales = 0, todayProfit = 0;
+  const today = new Date().toDateString();
+  const orgId = currentUser.orgId;
+
+  firestoredb.collection('products').where('orgId', '==', orgId).get()
+    .then(snapshot => {
+      totalProducts = snapshot.size;
+      snapshot.forEach(doc => { const p = doc.data(); stockValue += (p.buy || 0) * (p.stock || 0); });
+      document.getElementById('totalProducts').textContent = totalProducts;
+      document.getElementById('totalStockValue').textContent = formatCurrency(stockValue);
+    }).catch(err => debugLog('Dashboard products error: ' + err.message, 'error'));
+
+  firestoredb.collection('sales').where('orgId', '==', orgId).get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        const saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toDateString() : '';
+        if (saleDate === today) { todaySales += s.total || 0; todayProfit += s.profit || 0; }
+      });
+      document.getElementById('todaySales').textContent = formatCurrency(todaySales);
+      document.getElementById('todayProfit').textContent = formatCurrency(todayProfit);
+    }).catch(err => debugLog('Dashboard sales error: ' + err.message, 'error'));
+}
+
+// ============= USER MANAGEMENT =============
+async function addUser() {
+  if (!checkPermission('canManageUsers', 'Create user')) return;
+  if (!currentUser || !currentUser.orgId) return;
+
+  const username = document.getElementById('newUsername').value.trim().toLowerCase();
+  const email = document.getElementById('newEmail').value.trim().toLowerCase();
+  const password = document.getElementById('newPassword').value;
+  const role = document.getElementById('newRole').value;
+
+  if (!username || !email || !password) { showAlert('Please fill all fields', 'danger'); return; }
+  if (password.length < 6) { showAlert('Password must be at least 6 characters', 'warning'); return; }
+
+  debugLog('Creating staff via secondary Firebase app...');
+
+  try {
+    // Use secondary app so admin stays logged in
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary" + Date.now());
+    const secondaryAuth = secondaryApp.auth();
+
+    const userCredential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+    debugLog('Staff auth created: ' + userCredential.user.uid, 'success');
+
+    await firestoredb.collection('users').doc(userCredential.user.uid).set({
+      user: username, email: email, role: role, orgId: currentUser.orgId,
+      createdBy: currentUser.user,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await secondaryAuth.signOut();
+    await secondaryApp.delete();
+
+    showAlert('Staff account created!', 'success');
+    clearForm(['newUsername', 'newEmail', 'newPassword']);
+    loadUsers();
+  } catch (err) {
+    debugLog('ADD USER ERROR: ' + err.code + ' | ' + err.message, 'error');
+    showAlert(err.message, 'danger');
+  }
+}
+
+function loadUsers() {
+  if (!hasPermission('canManageUsers') || !currentUser || !currentUser.orgId) return;
+  document.getElementById('usersList').innerHTML = '<p>Loading...</p>';
+
+  firestoredb.collection('users').where('orgId', '==', currentUser.orgId).orderBy('createdAt', 'desc').get()
+    .then(snapshot => {
+      if (snapshot.empty) { document.getElementById('usersList').innerHTML = '<p>No users found.</p>'; return; }
+      let html = '';
+      snapshot.forEach(doc => {
+        const u = doc.data(), isCurrentUser = doc.id === currentUser.id;
+        const roleClass = u.role === 'admin' ? 'role-admin' : 'role-sales';
+        html += `<div class="user-card"><div class="user-details">
+          <span class="user-name">${u.user}</span>
+          <span class="user-role ${roleClass}">${u.role.toUpperCase()}</span>
+          ${isCurrentUser ? '<span style="color:#28a745;font-size:12px;"> (You)</span>' : ''}
+          <br><small style="color:#888;">Email: ${u.email || 'N/A'}</small>
+        </div></div>`;
+      });
+      document.getElementById('usersList').innerHTML = html;
+    })
+    .catch(err => { document.getElementById('usersList').innerHTML = '<p>Error loading users.</p>'; debugLog(err.message, 'error'); });
+}
+
+// ============= PRODUCTS =============
+function addProduct() {
+  if (!checkPermission('canAddProducts', 'Add product')) return;
+  if (!currentUser || !currentUser.orgId) return;
+
+  const name = document.getElementById('pname').value.trim();
+  const buy = parseFloat(document.getElementById('buy').value);
+  const sell = parseFloat(document.getElementById('sell').value);
+  const stock = parseInt(document.getElementById('stock').value) || 0;
+
+  if (!name || isNaN(buy) || isNaN(sell)) { showAlert('Fill all fields correctly', 'danger'); return; }
+  if (sell < buy) { showAlert('Selling price cannot be less than buying price', 'warning'); return; }
+
+  firestoredb.collection('products').add({
+    name, buy, sell, stock, orgId: currentUser.orgId,
+    createdBy: currentUser.user,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => { showAlert('Product added!', 'success'); clearForm(['pname','buy','sell','stock']); document.getElementById('lowStockThreshold').value = 5; })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function renderProducts(snapshot) {
+  const stockTable = document.getElementById('stockTable');
+  const productSelect = document.getElementById('productSelect');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+
+  let tableHTML = `<tr><th>Name</th>${perms.canViewBuyingPrice ? '<th>Buy</th>' : ''}<th>Sell</th><th>Stock</th>${perms.canEditProducts || perms.canDeleteProducts ? '<th>Actions</th>' : ''}</tr>`;
+  let selectHTML = `<option value="">Select Product</option>`;
+
+  snapshot.forEach(doc => {
+    const p = doc.data(), docId = doc.id;
+    tableHTML += `<tr><td>${p.name || 'N/A'}</td>${perms.canViewBuyingPrice ? `<td>${formatCurrency(p.buy)}</td>` : ''}<td>${formatCurrency(p.sell)}</td><td>${p.stock || 0}</td>${perms.canEditProducts || perms.canDeleteProducts ? `<td>${perms.canEditProducts ? `<button class="action-btn edit-btn" onclick="editProduct('${docId}', '${p.name}', ${p.buy}, ${p.sell}, ${p.stock})">Edit</button>` : ''}${perms.canDeleteProducts ? `<button class="action-btn delete-btn" onclick="deleteProduct('${docId}', '${p.name}')">Delete</button>` : ''}</td>` : ''}</tr>`;
+    selectHTML += `<option value="${docId}">${p.name} (Stock: ${p.stock || 0})</option>`;
+  });
+
+  if (snapshot.size === 0) {
+    const colspan = 3 + (perms.canViewBuyingPrice ? 1 : 0) + (perms.canEditProducts || perms.canDeleteProducts ? 1 : 0);
+    tableHTML += `<tr><td colspan="${colspan}" style="text-align:center;">No products yet</td></tr>`;
+  }
+
+  stockTable.innerHTML = tableHTML;
+  productSelect.innerHTML = selectHTML;
+}
+
+function editProduct(id, name, buy, sell, stock) {
+  if (!checkPermission('canEditProducts', 'Edit product')) return;
+  editingProductId = id;
+  document.getElementById('editPname').value = name;
+  document.getElementById('editBuy').value = buy;
+  document.getElementById('editSell').value = sell;
+  document.getElementById('editStock').value = stock;
+  document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() { document.getElementById('editModal').classList.remove('active'); editingProductId = null; }
+
+function saveProductEdit() {
+  if (!checkPermission('canEditProducts', 'Edit product')) return;
+  const name = document.getElementById('editPname').value.trim();
+  const buy = parseFloat(document.getElementById('editBuy').value);
+  const sell = parseFloat(document.getElementById('editSell').value);
+  const stock = parseInt(document.getElementById('editStock').value) || 0;
+
+  if (!name || isNaN(buy) || isNaN(sell) || isNaN(stock)) { showAlert('Fill all fields', 'danger'); return; }
+  if (sell < buy) { showAlert('Selling price < buying price', 'warning'); return; }
+
+  firestoredb.collection('products').doc(editingProductId).update({
+    name, buy, sell, stock, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => { closeEditModal(); updateDashboard(); showAlert('Product updated!', 'success'); })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function deleteProduct(productId, productName) {
+  if (!checkPermission('canDeleteProducts', 'Delete product')) return;
+  confirmAction = () => {
+    firestoredb.collection('products').doc(productId).delete()
+      .then(() => { updateDashboard(); showAlert(`Product "${productName}" deleted`, 'success'); })
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this product?';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+let allProducts = [];
+
+function renderProducts(snapshot) {
+  allProducts = [];
+  snapshot.forEach(doc => {
+    const p = doc.data();
+    allProducts.push({ id: doc.id, name: p.name || 'Unnamed product', stock: Number(p.stock || 0),
+      lowStockThreshold: Number.isFinite(p.lowStockThreshold) ? p.lowStockThreshold : 5,
+      buy: Number(p.buy || 0), sell: Number(p.sell || 0) });
+  });
+  filterStockTable();
+  renderStockAlerts(allProducts);
+  const selectHTML = allProducts.map(p => `<option value="${p.id}">${escapeInvoice(p.name)} (Stock: ${p.stock})</option>`).join('');
+  const productSelect = document.getElementById('productSelect');
+  const purchaseProductSelect = document.getElementById('purchaseProductSelect');
+  if (productSelect) productSelect.innerHTML = '<option value="">Select Product</option>' + selectHTML;
+  if (purchaseProductSelect) purchaseProductSelect.innerHTML = '<option value="">Select Product</option>' + selectHTML;
+  // Re-apply the sales picker filter if its search box has text.
+  if (document.getElementById('productSearch')?.value) filterProducts();
+  if (document.getElementById('purchaseProductSearch')?.value) filterPurchaseProducts();
+}
+
+function filterStockTable() {
+  const input = document.getElementById('stockProductSearch');
+  const query = (input ? input.value : '').trim().toLowerCase();
+  const table = document.getElementById('stockTable');
+  if (!table) return;
+  const perms = currentUser ? (PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES]) : PERMISSIONS[ROLES.SALES];
+  let html = `<tr><th>Name</th>${perms.canViewBuyingPrice ? '<th>Buy</th>' : ''}<th>Sell</th><th>Stock</th>${perms.canEditProducts || perms.canDeleteProducts ? '<th>Actions</th>' : ''}</tr>`;
+  const rows = allProducts.filter(p => p.name.toLowerCase().includes(query));
+  if (!rows.length) {
+    const colspan = 3 + (perms.canViewBuyingPrice ? 1 : 0) + (perms.canEditProducts || perms.canDeleteProducts ? 1 : 0);
+    html += `<tr><td colspan="${colspan}" style="text-align:center;padding:18px">${query ? 'No products match your search.' : 'No products yet.'}</td></tr>`;
+  } else {
+    rows.forEach(p => {
+      const safeName = escapeInvoice(p.name);
+      html += `<tr><td>${safeName}</td>${perms.canViewBuyingPrice ? `<td>${formatCurrency(p.buy)}</td>` : ''}<td>${formatCurrency(p.sell)}</td><td>${p.stock}</td>${perms.canEditProducts || perms.canDeleteProducts ? `<td>${perms.canEditProducts ? `<button class="action-btn edit-btn" onclick="editProduct('${p.id}', decodeURIComponent('${encodeURIComponent(p.name)}'), ${p.buy}, ${p.sell}, ${p.stock})">Edit</button>` : ''}${perms.canDeleteProducts ? `<button class="action-btn delete-btn" onclick="deleteProduct('${p.id}', decodeURIComponent('${encodeURIComponent(p.name)}'))">Delete</button>` : ''}</td>` : ''}</tr>`;
+    });
+  }
+  table.innerHTML = html;
+}
+
+function filterProducts() {
+  const input = document.getElementById('productSearch');
+  const query = (input ? input.value : '').trim().toLowerCase();
+  const select = document.getElementById('productSelect');
+  if (!select) return;
+  const current = select.value;
+  const matches = allProducts.filter(p => p.name.toLowerCase().includes(query));
+  select.innerHTML = '<option value="">Select Product</option>' + matches.map(p => `<option value="${p.id}">${escapeInvoice(p.name)} (Stock: ${p.stock})</option>`).join('');
+  if (matches.some(p => p.id === current)) select.value = current;
+}
+
+function filterPurchaseProducts() {
+  const search = document
+    .getElementById('purchaseProductSearch')
+    .value
+    .toLowerCase();
+
+  const productSelect = document.getElementById('purchaseProductSelect');
+
+  let html = '<option value="">Select Product</option>';
+
+  allProducts.forEach(product => {
+    if (product.name.toLowerCase().includes(search)) {
+      html += `
+      <option value="${product.id}">
+        ${product.name} (Stock: ${product.stock})
+      </option>`;
+    }
+  });
+
+  productSelect.innerHTML = html;
+}
+
+function fillPurchasePrice() {
+  const productId = document.getElementById('purchaseProductSelect').value;
+  const priceInput = document.getElementById('purchasePrice');
+  const product = allProducts.find(item => item.id === productId);
+
+  if (product && (!priceInput.value || parseFloat(priceInput.value) <= 0)) {
+    priceInput.value = product.buy || '';
+  }
+}
+
+// ============= STOCK ALERTS + FORM RESET =============
+let lastStockAlertSignature = '';
+function renderStockAlerts(products) {
+  const box = document.getElementById('stockAlerts');
+  if (!box) return;
+  const alerts = (products || []).filter(p => Number(p.stock || 0) <= 0 || Number(p.stock || 0) <= Number(p.lowStockThreshold ?? 5));
+  const signature = alerts.map(p => `${p.id}:${p.stock}`).sort().join('|');
+  box.innerHTML = alerts.length ? alerts.map(p => {
+    const out = Number(p.stock || 0) <= 0;
+    return `<div class="stock-alert ${out ? 'out' : 'low'}"><span class="stock-alert-icon">${out ? '⛔' : '⚠️'}</span><div><b>${escapeInvoice(p.name)}</b><small>${out ? 'OUT OF STOCK — restock immediately' : `LOW STOCK — ${p.stock} remaining (alert level ${p.lowStockThreshold ?? 5})`}</small></div><span class="stock-count">${p.stock}</span></div>`;
+  }).join('') : '<div class="stock-ok">✓ All products are above their low-stock levels.</div>';
+  if (signature && signature !== lastStockAlertSignature && lastStockAlertSignature !== '') {
+    const out = alerts.filter(p => Number(p.stock || 0) <= 0);
+    if (out.length) showAlert('Out of stock: ' + out.map(p=>p.name).join(', '), 'danger');
+    else if (alerts.length) showAlert('Low-stock warning: ' + alerts.map(p=>p.name).join(', '), 'warning');
+    if ('Notification' in window && Notification.permission === 'granted') {
+      alerts.forEach(p => new Notification(Number(p.stock||0)<=0 ? 'Product out of stock' : 'Low stock alert', {body:`${p.name}: ${p.stock} left`}));
+    }
+  }
+  lastStockAlertSignature = signature;
+}
+function enableStockNotifications() {
+  if (!('Notification' in window)) { showAlert('Browser notifications are not supported. Stock alerts will still appear on the dashboard.', 'warning'); return; }
+  Notification.requestPermission().then(permission => showAlert(permission === 'granted' ? 'Browser stock notifications enabled.' : 'Notifications not enabled. Check browser site permissions.', permission === 'granted' ? 'success' : 'warning'));
+}
+function resetSaleForm() {
+  ['productSearch','qty','customPrice','customer'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('discount').value='0';
+  document.getElementById('payment').selectedIndex=0;
+  document.getElementById('productSelect').value='';
+  filterProducts();
+  showAlert('Sale form reset. No sales or stock records were deleted.', 'success');
+}
+function resetPurchaseForm() {
+  ['purchaseProductSearch','purchaseQty','purchasePrice','purchaseSupplier','purchaseNote'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
+  const file=document.getElementById('purchaseReceipt'); if(file)file.value='';
+  document.getElementById('purchaseProductSelect').value='';
+  filterPurchaseProducts();
+  showAlert('Purchase form reset. Existing stock and purchase records were not changed.', 'success');
+}
+function resetProductForm() {
+  clearForm(['pname','buy','sell','stock']);
+  document.getElementById('lowStockThreshold').value='5';
+  showAlert('Product form reset. Existing products were not changed.', 'success');
+}
+
+// ============= SALES =============
+function sell() {
+  if (!currentUser || !currentUser.orgId) return;
+  const productId = document.getElementById('productSelect').value;
+  const qty = parseInt(document.getElementById('qty').value);
+  const customPrice = parseFloat(document.getElementById('customPrice').value) || 0;
+  const discount = parseFloat(document.getElementById('discount').value) || 0;
+  const customer = document.getElementById('customer').value.trim() || 'Walk-in';
+  const payment = document.getElementById('payment').value;
+
+  if (!productId || isNaN(qty) || qty < 1) { showAlert('Select product and valid quantity', 'danger'); return; }
+
+  firestoredb.collection('products').doc(productId).get()
+    .then(doc => {
+      if (!doc.exists) { showAlert('Product not found', 'danger'); return; }
+      const p = doc.data();
+      if (qty > p.stock) { showAlert(`Not enough stock. Available: ${p.stock}`, 'danger'); return; }
+
+      const unitPrice = customPrice > 0 ? customPrice : p.sell;
+      const subtotal = unitPrice * qty;
+      const total = subtotal - discount;
+      const profit = (unitPrice - p.buy) * qty - discount;
+
+      const sale = {
+        product: p.name, productId, qty, unitPrice, subtotal, discount, total, profit,
+        payment, customer, soldBy: currentUser.user, orgId: currentUser.orgId,
+        date: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      return firestoredb.collection('sales').add(sale).then(() => {
+        return firestoredb.collection('products').doc(productId).update({ stock: p.stock - qty });
+      }).then(() => {
+        generateReceipt({ ...sale, date: new Date() });
+        showAlert('Sale completed!', 'success');
+		loadTodaySales();
+		loadTodaySalesSummary();
+        clearForm(['qty', 'customPrice', 'discount', 'customer']);
+        document.getElementById('productSelect').value = '';
+        updateDashboard();
+      });
+    }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function loadDailySales() {
+  if (!currentUser || !currentUser.orgId) return;
+  const dateInput = document.getElementById('dailySalesDate');
+  if (!dateInput.value) {
+    const now = new Date();
+    dateInput.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+  const selectedDate = dateInput.value;
+  const table = document.getElementById('dailySalesTable');
+  table.innerHTML = '<tr><th>Time</th><th>Item</th><th>Unit Price</th><th>Qty</th><th>Sales Total</th><th>Profit</th></tr><tr><td colspan="6" style="text-align:center">Loading sales…</td></tr>';
+  firestoredb.collection('sales').where('orgId', '==', currentUser.orgId).get().then(snapshot => {
+    const rows = [];
+    snapshot.forEach(doc => {
+      const sale = doc.data();
+      if (!sale.date) return;
+      const date = sale.date.toDate ? sale.date.toDate() : new Date(sale.date);
+      if (!isNaN(date) && date.toLocaleDateString('en-CA') === selectedDate) rows.push({ sale, date });
+    });
+    rows.sort((a, b) => a.date - b.date);
+    let totalSales = 0, totalProfit = 0, totalQty = 0;
+    let html = '<tr><th>Time</th><th>Item</th><th>Unit Price</th><th>Qty</th><th>Sales Total</th><th>Profit</th></tr>';
+    rows.forEach(({ sale, date }) => {
+      const qty = Number(sale.qty) || 0, total = Number(sale.total) || 0, profit = Number(sale.profit) || 0;
+      totalQty += qty; totalSales += total; totalProfit += profit;
+      html += `<tr><td>${date.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}</td><td>${sale.product || 'N/A'}</td><td>${formatCurrency(sale.unitPrice)}</td><td>${qty}</td><td>${formatCurrency(total)}</td><td>${formatCurrency(profit)}</td></tr>`;
+    });
+    if (!rows.length) html += '<tr><td colspan="6" style="text-align:center">No sales for this date</td></tr>';
+    html += `<tr style="font-weight:bold;background:#f0f0f0"><td colspan="3">Total</td><td>${totalQty}</td><td>${formatCurrency(totalSales)}</td><td>${formatCurrency(totalProfit)}</td></tr>`;
+    table.innerHTML = html;
+    document.getElementById('dailySalesCount').textContent = totalQty;
+    document.getElementById('dailySalesTotal').textContent = formatCurrency(totalSales);
+    document.getElementById('dailySalesProfit').textContent = formatCurrency(totalProfit);
+  }).catch(err => {
+    table.innerHTML = '<tr><td colspan="6" style="text-align:center">Could not load sales. Please try again.</td></tr>';
+    showAlert(err.message, 'danger');
+  });
+}
+function loadTodaySales() {
+
+    if (!currentUser || !currentUser.orgId) return;
+
+      const table = document.getElementById("todaySoldItemsTable");
+
+    const today = new Date().toDateString();
+
+    firestoredb.collection("sales")
+    .where("orgId","==",currentUser.orgId)
+    .orderBy("date","desc")
+    .limit(50)
+    .get()
+    .then(snapshot=>{
+
+        let html = `
+        <tr>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Payment</th>
+        </tr>`;
+
+        let found = false;
+
+        snapshot.forEach(doc=>{
+
+            const sale = doc.data();
+
+            if(!sale.date) return;
+
+            const saleDate =
+            sale.date.toDate().toDateString();
+
+            if(saleDate === today){
+
+                found = true;
+
+                html += `
+                <tr>
+                    <td>${sale.product || 'N/A'}</td>
+                    <td>${formatCurrency(sale.unitPrice)}</td>
+                    <td>${sale.qty || 0}</td>
+                    <td>${formatCurrency(sale.total)}</td>
+                    <td>${sale.payment || 'N/A'}</td>
+                </tr>`;
+            }
+
+        });
+
+        if(!found){
+            html += `
+            <tr>
+                <td colspan="5" style="text-align:center">
+                No sales today
+                </td>
+            </tr>`;
+        }
+
+        table.innerHTML = html;
+    });
+}
+
+let lastInvoiceSale = null;
+function generateReceipt(sale) {
+  lastInvoiceSale = {...sale, invoiceNo: sale.invoiceNo || ('EDD-' + Date.now().toString().slice(-8))};
+  const s = lastInvoiceSale;
+  document.getElementById('receipt').textContent =
+`EDDMOBI ELECTRONICS
+SALES RECEIPT / INVOICE
+Invoice No: ${s.invoiceNo}
+Date: ${formatDate(s.date)}
+Customer: ${s.customer || 'Walk-in'}
+Sold By: ${s.soldBy || 'Staff'}
+Payment: ${s.payment || 'Cash'}
+
+Item: ${s.product}
+Quantity: ${s.qty} x ${formatCurrency(s.unitPrice)}
+Subtotal: ${formatCurrency(s.subtotal)}
+${s.discount > 0 ? 'Discount: -' + formatCurrency(s.discount) + '\\n' : ''}TOTAL DUE: ${formatCurrency(s.total)}
+
+Thank you for shopping with Eddmobi!
+0722540912`;
+}
+function escapeInvoice(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function printLastInvoice() {
+  if (!lastInvoiceSale) { showAlert('Complete a sale first to generate an invoice.', 'warning'); return; }
+  const s = lastInvoiceSale;
+  const w = window.open('', '_blank', 'width=800,height=700');
+  if (!w) { showAlert('Allow pop-ups to print the invoice.', 'warning'); return; }
+  w.document.write(`<!doctype html><html><head><title>Invoice ${escapeInvoice(s.invoiceNo)}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:35px auto;padding:25px;color:#172033}h1{color:#1557b0;margin-bottom:4px}.sub{color:#667085}table{width:100%;border-collapse:collapse;margin:25px 0}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}.total{text-align:right;font-size:22px;font-weight:bold;color:#1557b0}.thanks{margin-top:35px;border-top:3px solid #e5323a;padding-top:15px}</style></head><body><h1>EDDMOBI ELECTRONICS</h1><div class="sub">Kajiado Town · 0722540912</div><h2>SALES INVOICE</h2><p><b>Invoice:</b> ${escapeInvoice(s.invoiceNo)}<br><b>Date:</b> ${escapeInvoice(formatDate(s.date))}<br><b>Customer:</b> ${escapeInvoice(s.customer||'Walk-in')}<br><b>Payment:</b> ${escapeInvoice(s.payment||'Cash')}</p><table><thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody><tr><td>${escapeInvoice(s.product)}</td><td>${s.qty}</td><td>${formatCurrency(s.unitPrice)}</td><td>${formatCurrency(s.subtotal)}</td></tr></tbody></table><p>Subtotal: ${formatCurrency(s.subtotal)}</p><p>Discount: ${formatCurrency(s.discount||0)}</p><p class="total">TOTAL: ${formatCurrency(s.total)}</p><div class="thanks">Thank you for shopping with Eddmobi Electronics.</div><script>window.onload=()=>window.print()<\\/script></body></html>`);
+  w.document.close();
+}
+function clearReceipt() {
+  document.getElementById('receipt').textContent = 'Complete a sale to generate a receipt and invoice here.';
+  lastInvoiceSale = null;
+}
+
+function renderRecentSales(snapshot) {
+  const table = document.getElementById('recentSalesTable');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+  let html = `<tr><th>Date</th><th>Product</th><th>Qty</th><th>Total</th><th>Sold By</th>${perms.canDeleteSales ? '<th>Action</th>' : ''}</tr>`;
+
+  if (snapshot.size === 0) {
+    const colspan = 5 + (perms.canDeleteSales ? 1 : 0);
+    html += `<tr><td colspan="${colspan}" style="text-align:center;">No sales yet</td></tr>`;
+  } else {
+    snapshot.forEach(doc => {
+      const s = doc.data(), docId = doc.id;
+      const dateStr = s.date ? formatDate(s.date.toDate ? s.date.toDate() : s.date) : 'N/A';
+      html += `<tr><td>${dateStr}</td><td>${s.product || 'N/A'}</td><td>${s.qty || 0}</td><td>${formatCurrency(s.total)}</td><td>${s.soldBy || 'N/A'}</td>${perms.canDeleteSales ? `<td><button class="action-btn delete-btn" onclick="deleteSale('${docId}', '${s.productId}', ${s.qty || 0})">Delete</button></td>` : ''}</tr>`;
+    });
+  }
+  table.innerHTML = html;
+}
+
+function deleteSale(saleId, productId, qty) {
+  if (!checkPermission('canDeleteSales', 'Delete sale')) return;
+  confirmAction = () => {
+    const promises = [];
+    if (productId && qty > 0) {
+      promises.push(firestoredb.collection('products').doc(productId).get().then(doc => {
+        if (doc.exists) return firestoredb.collection('products').doc(productId).update({ stock: (doc.data().stock || 0) + qty });
+      }));
+    }
+    Promise.all(promises).then(() => firestoredb.collection('sales').doc(saleId).delete())
+      .then(() => { updateDashboard(); showAlert('Sale deleted, stock restored', 'success'); })
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this sale? Stock will be restored.';
+  document.getElementById('confirmModal').classList.add('active');
+}
+
+// ============= PURCHASES =============
+function addPurchase() {
+  if (!checkPermission('canAddPurchases', 'Add purchase')) return;
+  if (!currentUser || !currentUser.orgId) return;
+
+  const productId = document.getElementById('purchaseProductSelect').value;
+  const qty = parseInt(document.getElementById('purchaseQty').value);
+  const unitCost = parseFloat(document.getElementById('purchasePrice').value);
+  const supplier = document.getElementById('purchaseSupplier').value.trim() || 'N/A';
+  const note = document.getElementById('purchaseNote').value.trim();
+  const receiptFile = document.getElementById('purchaseReceipt').files[0];
+  if (receiptFile && receiptFile.size > 700 * 1024) { showAlert('Receipt must be under 700 KB in this version. Use a smaller file.', 'warning'); return; }
+
+  if (!productId) { showAlert('Select product for purchase', 'danger'); return; }
+  if (isNaN(qty) || qty < 1) { showAlert('Enter valid purchase quantity', 'danger'); return; }
+  if (isNaN(unitCost) || unitCost < 0) { showAlert('Enter valid buying price', 'danger'); return; }
+
+  const productRef = firestoredb.collection('products').doc(productId);
+
+  const readReceipt = receiptFile ? new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({receiptName: receiptFile.name, receiptType: receiptFile.type || 'application/octet-stream', receiptData: reader.result});
+    reader.onerror = () => reject(new Error('Could not read receipt file'));
+    reader.readAsDataURL(receiptFile);
+  }) : Promise.resolve({});
+  Promise.all([productRef.get(), readReceipt]).then(([doc, receiptInfo]) => {
+    if (!doc.exists) { throw new Error('Product not found'); }
+
+    const product = doc.data();
+    const totalCost = qty * unitCost;
+    const purchaseLog = {
+      product: product.name || 'N/A',
+      productId,
+      qty,
+      unitCost,
+      totalCost,
+      supplier,
+      note,
+      orgId: currentUser.orgId,
+      recordedBy: currentUser.user,
+      ...receiptInfo,
+      date: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    return productRef.update({
+      stock: (product.stock || 0) + qty,
+      buy: unitCost,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      return firestoredb.collection('purchases').add(purchaseLog)
+        .then(() => ({ logSaved: true }))
+        .catch(err => {
+          debugLog('Purchase log not saved: ' + err.message, 'warn');
+          return { logSaved: false };
+        });
+    });
+  }).then(result => {
+    clearForm(['purchaseQty', 'purchasePrice', 'purchaseSupplier', 'purchaseNote']); document.getElementById('purchaseReceipt').value = '';
+    document.getElementById('purchaseProductSelect').value = '';
+    updateDashboard();
+    if (result && result.logSaved === false) {
+      showAlert('Stock updated. Purchase log was blocked by Firebase permissions.', 'warning');
+    } else {
+      showAlert('Purchase added and stock updated!', 'success');
+    }
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function renderPurchases(snapshot) {
+  const table = document.getElementById('purchasesTable');
+  if (!table) return;
+
+  let html = `<tr><th>Date</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Supplier</th><th>Recorded By</th><th>Receipt</th></tr>`;
+
+  if (snapshot.size === 0) {
+    html += `<tr><td colspan="7" style="text-align:center;">No purchases yet</td></tr>`;
+  } else {
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      const dateStr = p.date ? formatDate(p.date.toDate ? p.date.toDate() : p.date) : 'N/A';
+      html += `<tr><td>${dateStr}</td><td>${p.product || 'N/A'}</td><td>${p.qty || 0}</td><td>${formatCurrency(p.unitCost)}</td><td>${formatCurrency(p.totalCost)}</td><td>${p.supplier || 'N/A'}</td><td>${p.recordedBy || 'N/A'}</td><td>${p.receiptData ? `<a href="${p.receiptData}" download="${p.receiptName || 'supplier-receipt'}">View / Download</a>` : '—'}</td></tr>`;
+    });
+  }
+
+  table.innerHTML = html;
+}
+     function loadTodaySalesSummary() {
+
+    if (!currentUser || !currentUser.orgId) return;
+
+    const table = document.getElementById('todaySalesSummaryTable');
+    if (!table) return;
+
+    firestoredb.collection('sales')
+        .where('orgId', '==', currentUser.orgId)
+        .orderBy('date', 'desc')
+        .limit(100)
+        .get()
+        .then(snapshot => {
+
+            let html = `
+            <tr>
+                <th>Product</th>
+                <th>Total Qty</th>
+                <th>Avg Price</th>
+                <th>Total Sales</th>
+                <th>Payments</th>
+            </tr>`;
+
+            const today = new Date().toDateString();
+            const summary = {};
+            let totalQty = 0;
+            let totalSales = 0;
+
+            snapshot.forEach(doc => {
+
+                const sale = doc.data();
+
+                if (!sale.date) return;
+
+                const saleDate = (sale.date.toDate ? sale.date.toDate() : new Date(sale.date)).toDateString();
+
+                if (saleDate === today) {
+
+                    const product = sale.product || 'N/A';
+                    const qty = sale.qty || 0;
+                    const saleTotal = sale.total || 0;
+                    const payment = sale.payment || 'N/A';
+
+                    if (!summary[product]) {
+                        summary[product] = {
+                            qty: 0,
+                            total: 0,
+                            payments: new Set()
+                        };
+                    }
+
+                    summary[product].qty += qty;
+                    summary[product].total += saleTotal;
+                    summary[product].payments.add(payment);
+                    totalQty += qty;
+                    totalSales += saleTotal;
+                }
+            });
+
+            const productNames = Object.keys(summary).sort();
+
+            if (productNames.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="5" style="text-align:center">No sales today</td>
+                    </tr>`;
+            } else {
+                productNames.forEach(product => {
+                    const item = summary[product];
+                    const avgPrice = item.qty > 0 ? item.total / item.qty : 0;
+
+                    html += `
+                    <tr>
+                        <td>${product}</td>
+                        <td>${item.qty}</td>
+                        <td>${formatCurrency(avgPrice)}</td>
+                        <td>${formatCurrency(item.total)}</td>
+                        <td>${Array.from(item.payments).join(', ')}</td>
+                    </tr>`;
+                });
+            }
+
+            html += `
+            <tr style="font-weight:bold;background:#f0f0f0;">
+                <td>Total</td>
+                <td>${totalQty}</td>
+                <td>-</td>
+                <td>${formatCurrency(totalSales)}</td>
+                <td>-</td>
+            </tr>`;
+
+            table.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+// ============= EXPENSES =============
+function addExpense() {
+  if (!checkPermission('canAddExpenses', 'Add expense')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const name = document.getElementById('expenseName').value.trim();
+  const amount = parseFloat(document.getElementById('expenseAmount').value);
+  if (!name) { showAlert('Enter expense description', 'danger'); return; }
+  if (isNaN(amount) || amount <= 0) { showAlert('Enter valid amount', 'danger'); return; }
+
+  firestoredb.collection('expenses').add({
+    name, amount, orgId: currentUser.orgId,
+    date: firebase.firestore.FieldValue.serverTimestamp(),
+    recordedBy: currentUser.user
+  }).then(() => { clearForm(['expenseName', 'expenseAmount']); showAlert('Expense recorded!', 'success'); })
+    .catch(err => showAlert(err.message, 'danger'));
+}
+
+function renderExpenses(snapshot) {
+  const expensesTable = document.getElementById('expensesTable');
+  const perms = PERMISSIONS[currentUser.role] || PERMISSIONS[ROLES.SALES];
+  let html = `<tr><th>Date</th><th>Description</th><th>Amount</th><th>Recorded By</th>${perms.canDeleteExpenses ? '<th>Action</th>' : ''}</tr>`;
+
+  if (snapshot.size === 0) {
+    const colspan = 4 + (perms.canDeleteExpenses ? 1 : 0);
+    html += `<tr><td colspan="${colspan}" style="text-align:center;">No expenses yet</td></tr>`;
+  } else {
+    snapshot.forEach(doc => {
+      const e = doc.data(), docId = doc.id;
+      const dateStr = e.date ? formatDate(e.date.toDate ? e.date.toDate() : e.date) : 'N/A';
+      html += `<tr><td>${dateStr}</td><td>${e.name || 'N/A'}</td><td>${formatCurrency(e.amount)}</td><td>${e.recordedBy || 'N/A'}</td>${perms.canDeleteExpenses ? `<td><button class="action-btn delete-btn" onclick="deleteExpense('${docId}')">Delete</button></td>` : ''}</tr>`;
+    });
+  }
+  expensesTable.innerHTML = html;
+}
+
+function deleteExpense(expenseId) {
+  if (!checkPermission('canDeleteExpenses', 'Delete expense')) return;
+  confirmAction = () => {
+    firestoredb.collection('expenses').doc(expenseId).delete()
+      .then(() => showAlert('Expense deleted!', 'success'))
+      .catch(err => showAlert(err.message, 'danger'));
+  };
+  document.getElementById('confirmMessage').textContent = 'Delete this expense?';
+  document.getElementById('confirmModal').classList.add('active');}
+
+// ============= PROFIT TREND GRAPH =============
+function loadProfitTrend() {
+  const canvas = document.getElementById('profitTrendCanvas');
+  const summary = document.getElementById('profitTrendSummary');
+  if (!canvas || !summary) return;
+  if (!currentUser || !currentUser.orgId) {
+    summary.innerHTML = '<span>Sign in to view profit trends.</span>';
+    drawProfitTrend([], []); return;
+  }
+  if (!hasPermission('canViewReports')) {
+    summary.innerHTML = '<span>You do not have permission to view reports.</span>';
+    drawProfitTrend([], []); return;
+  }
+  summary.innerHTML = '<span>Loading saved sales and expenses…</span>';
+  const orgId = currentUser.orgId;
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    const now = new Date();
+    const mode = (document.getElementById('profitTrendPeriod') || {}).value || 'monthly';
+    let periods = [];
+    if (mode === 'weekly') {
+      const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const day = (monday.getDay() + 6) % 7;
+      monday.setDate(monday.getDate() - day);
+      for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); periods.push({start:d,end:new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),label:d.toLocaleDateString('en-KE',{weekday:'short'})}); }
+    } else if (mode === 'yearly') {
+      for (let i = 0; i < 12; i++) { const start = new Date(now.getFullYear(), i, 1); periods.push({start,end:new Date(now.getFullYear(),i+1,1),label:start.toLocaleDateString('en-KE',{month:'short'})}); }
+    } else {
+      const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      for (let i = 1; i <= days; i++) { const start = new Date(now.getFullYear(),now.getMonth(),i); periods.push({start,end:new Date(now.getFullYear(),now.getMonth(),i+1),label:String(i)}); }
+    }
+    periods.forEach(p => { p.gross = 0; p.expenses = 0; p.sales = 0; });
+    const asDate = value => value ? new Date(value.toDate ? value.toDate() : value) : null;
+    salesSnapshot.forEach(doc => {
+      const sale = doc.data(), date = asDate(sale.date);
+      if (!date || isNaN(date.getTime())) return;
+      const period = periods.find(p => date >= p.start && date < p.end);
+      if (period) { period.gross += Number(sale.profit) || 0; period.sales += Number(sale.total) || 0; }
+    });
+    expensesSnapshot.forEach(doc => {
+      const expense = doc.data(), date = asDate(expense.date);
+      if (!date || isNaN(date.getTime())) return;
+      const period = periods.find(p => date >= p.start && date < p.end);
+      if (period) period.expenses += Number(expense.amount) || 0;
+    });
+    periods.forEach(p => { p.net = p.gross - p.expenses; });
+    drawProfitTrend(periods, periods.map(p => p.net));
+    const gross = periods.reduce((sum,p)=>sum+p.gross,0);
+    const costs = periods.reduce((sum,p)=>sum+p.expenses,0);
+    const net = gross - costs;
+    summary.innerHTML = `<span>Gross profit: <b>${formatCurrency(gross)}</b></span><span>Expenses: <b>${formatCurrency(costs)}</b></span><span>Net profit: <b>${formatCurrency(net)}</b></span>`;
+  }).catch(err => {
+    summary.innerHTML = '<span>Could not load profit trend. Check your connection and try refresh.</span>';
+    console.error('Profit trend error:', err);
+  });
+}
+
+function drawProfitTrend(periods, values) {
+  const canvas = document.getElementById('profitTrendCanvas');
+  if (!canvas) return;
+  const width = Math.max(300, canvas.clientWidth || 700), height = Math.max(240, canvas.clientHeight || 310);
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = width * ratio; canvas.height = height * ratio;
+  const ctx = canvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0); ctx.clearRect(0,0,width,height);
+  const pad = {left:66,right:18,top:22,bottom:42}, plotW = width-pad.left-pad.right, plotH=height-pad.top-pad.bottom;
+  ctx.font = '11px Segoe UI, Arial'; ctx.fillStyle='#64748b'; ctx.strokeStyle='#e7edf5'; ctx.lineWidth=1;
+  if (!periods || !periods.length) { ctx.fillText('No profit data to display yet.', pad.left, height/2); return; }
+  const all = values.concat([0]); let min = Math.min(...all), max = Math.max(...all);
+  if (min === max) { min -= 100; max += 100; }
+  const span = max-min; min -= span*.12; max += span*.12;
+  const y = v => pad.top + (max-v)/(max-min)*plotH;
+  for(let i=0;i<=4;i++) { const val=min+(max-min)*i/4, yy=y(val); ctx.beginPath();ctx.moveTo(pad.left,yy);ctx.lineTo(width-pad.right,yy);ctx.stroke();ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.fillText(Math.round(val).toLocaleString('en-KE'),pad.left-9,yy+4); }
+  const zeroY=y(0); ctx.strokeStyle='#9aa9bd';ctx.beginPath();ctx.moveTo(pad.left,zeroY);ctx.lineTo(width-pad.right,zeroY);ctx.stroke();
+  const step=periods.length>1?plotW/(periods.length-1):plotW/2;
+  ctx.beginPath();
+  values.forEach((v,i)=>{const xx=pad.left+(periods.length>1?i*step:plotW/2), yy=y(v); if(i===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);});
+  ctx.strokeStyle='#1769d2';ctx.lineWidth=3;ctx.lineJoin='round';ctx.stroke();
+  values.forEach((v,i)=>{const xx=pad.left+(periods.length>1?i*step:plotW/2), yy=y(v);ctx.beginPath();ctx.arc(xx,yy,3.5,0,Math.PI*2);ctx.fillStyle=v<0?'#e5323a':'#1769d2';ctx.fill();});
+  const labelEvery=Math.max(1,Math.ceil(periods.length/(width<480?7:12)));
+  ctx.fillStyle='#64748b';ctx.textAlign='center';
+  periods.forEach((p,i)=>{if(i%labelEvery===0||i===periods.length-1){const xx=pad.left+(periods.length>1?i*step:plotW/2);ctx.fillText(p.label,xx,height-16);}});
+  ctx.save();ctx.translate(15,pad.top+plotH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillStyle='#334155';ctx.font='12px Segoe UI, Arial';ctx.fillText('Net profit (KES)',0,0);ctx.restore();
+}
+window.addEventListener('resize', () => { if (document.getElementById('profitTrendCanvas')) loadProfitTrend(); });
+
+// ============= REPORTS =============
+function generateDailyReport() {
+  if (!hasPermission('canViewReports')) { showAlert('No permission', 'danger'); return; }
+  if (!currentUser || !currentUser.orgId) return;
+  const today = new Date().toDateString(), orgId = currentUser.orgId;
+
+  firestoredb.collection('sales').where('orgId', '==', orgId).get().then(snapshot => {
+    let totalSales = 0, totalProfit = 0, count = 0;
+    snapshot.forEach(doc => {
+      const s = doc.data();
+      const saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toDateString() : '';
+      if (saleDate === today) { totalSales += s.total || 0; totalProfit += s.profit || 0; count++; }
+    });
+    document.getElementById('output').textContent = `DAILY REPORT - ${new Date().toLocaleDateString('en-KE')}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${count}
+Total Sales: ${formatCurrency(totalSales)}
+Profit: ${formatCurrency(totalProfit)}
+
+By: ${currentUser.user}`;
+    showAlert('Daily report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function generateMonthlyReport() {
+  if (!hasPermission('canViewReports')) { showAlert('No permission', 'danger'); return; }
+  if (!currentUser || !currentUser.orgId) return;
+  const now = new Date(), currentMonth = now.getMonth(), currentYear = now.getFullYear(), orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let totalSales = 0, totalProfit = 0, salesCount = 0;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data(), saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date) : null;
+      if (saleDate && saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+        totalSales += s.total || 0; totalProfit += s.profit || 0; salesCount++;
+      }
+    });
+    let totalExpenses = 0;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data(), expenseDate = e.date ? new Date(e.date.toDate ? e.date.toDate() : e.date) : null;
+      if (expenseDate && expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) totalExpenses += e.amount || 0;
+    });
+    const netProfit = totalProfit - totalExpenses;
+    const monthName = new Date(currentYear, currentMonth).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' });
+    document.getElementById('output').textContent = `MONTHLY REPORT - ${monthName}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${salesCount}
+Total Sales: ${formatCurrency(totalSales)}
+Gross Profit: ${formatCurrency(totalProfit)}
+Expenses: ${formatCurrency(totalExpenses)}
+NET PROFIT: ${formatCurrency(netProfit)}
+
+By: ${currentUser.user}`;
+    showAlert('Monthly report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function generateAnnualReport() {
+  if (!checkPermission('canViewAnnualReport', 'View annual report')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const currentYear = new Date().getFullYear(), orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let totalSales = 0, totalProfit = 0, salesCount = 0;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data(), saleDate = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date) : null;
+      if (saleDate && saleDate.getFullYear() === currentYear) { totalSales += s.total || 0; totalProfit += s.profit || 0; salesCount++; }
+    });
+    let totalExpenses = 0;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data(), expenseDate = e.date ? new Date(e.date.toDate ? e.date.toDate() : e.date) : null;
+      if (expenseDate && expenseDate.getFullYear() === currentYear) totalExpenses += e.amount || 0;
+    });
+    document.getElementById('output').textContent = `ANNUAL REPORT - ${currentYear}
+Org: ${currentOrg ? currentOrg.name : 'N/A'}
+
+Transactions: ${salesCount}
+Total Sales: ${formatCurrency(totalSales)}
+Gross Profit: ${formatCurrency(totalProfit)}
+Expenses: ${formatCurrency(totalExpenses)}
+NET PROFIT: ${formatCurrency(totalProfit - totalExpenses)}
+
+By: ${currentUser.user}`;
+    showAlert('Annual report generated', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+function exportToCSV() {
+  if (!checkPermission('canExportCSV', 'Export data')) return;
+  if (!currentUser || !currentUser.orgId) return;
+  const orgId = currentUser.orgId;
+
+  Promise.all([
+    firestoredb.collection('sales').where('orgId', '==', orgId).get(),
+    firestoredb.collection('expenses').where('orgId', '==', orgId).get()
+  ]).then(([salesSnapshot, expensesSnapshot]) => {
+    let csv = `EDDMOBI POS - DATA EXPORT
+Organization: ${currentOrg ? currentOrg.name : 'N/A'}
+
+SALES DATA
+Date,Product,Quantity,Unit Price,Subtotal,Discount,Total,Profit,Payment,Customer,Sold By
+`;
+    salesSnapshot.forEach(doc => {
+      const s = doc.data();
+      const dateStr = s.date ? formatDate(s.date.toDate ? s.date.toDate() : s.date) : '';
+      csv += `"${dateStr}","${s.product || ''}",${s.qty || 0},${s.unitPrice || 0},${s.subtotal || 0},${s.discount || 0},${s.total || 0},${s.profit || 0},"${s.payment || ''}","${s.customer || ''}","${s.soldBy || ''}"
+`;
+    });
+    csv += `
+EXPENSE DATA
+Date,Description,Amount,Recorded By
+`;
+    expensesSnapshot.forEach(doc => {
+      const e = doc.data();
+      const dateStr = e.date ? formatDate(e.date.toDate ? e.date.toDate() : e.date) : '';
+      csv += `"${dateStr}","${e.name || ''}",${e.amount || 0},"${e.recordedBy || ''}"
+`;
+    });
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+    element.setAttribute('download', `eddmobi_export_${new Date().getTime()}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    showAlert('Data exported to CSV!', 'success');
+  }).catch(err => showAlert(err.message, 'danger'));
+}
+
+// ============= MODALS =============
+function executeConfirm() { if (confirmAction) confirmAction(); cancelConfirm(); }
+function cancelConfirm() { document.getElementById('confirmModal').classList.remove('active'); confirmAction = null; }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.getElementById('confirmModal').classList.remove('active');
+    document.getElementById('editModal').classList.remove('active');
+  }
+});
+
+document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target === document.getElementById('confirmModal')) cancelConfirm(); });
+document.getElementById('editModal').addEventListener('click', (e) => { if (e.target === document.getElementById('editModal')) closeEditModal(); });
+
+// ============= INIT =============
+document.addEventListener('DOMContentLoaded', () => {
+  debugLog('Page loaded. Waiting for auth state...');
+  showLogin();
+});
+</script>
+
+</body>
+</html>
+
+

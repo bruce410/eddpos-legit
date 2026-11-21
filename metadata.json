@@ -1,0 +1,8 @@
+{
+  "name": "EDDMOBI POS",
+  "description": "EDDMOBI Point of Sale system with Super Admin portal for managing client payment plans and subscriptions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
